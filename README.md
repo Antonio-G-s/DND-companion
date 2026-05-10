@@ -42,6 +42,10 @@ Response:
 3. Subscribe to the event bus in `onMount`
 4. Add the component route in `App.svelte`
 
+## Documentation
+
+- [JSON Reference & AI Prompts](docs/JSON_REFERENCE.md) — full schema for every sub app, worked examples, and copy-paste AI prompts to generate character data
+
 ## Setup
 
 ### Prerequisites
