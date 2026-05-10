@@ -1,0 +1,92 @@
+/* ============================================
+   D&D Companion — Global Styles v3
+   Mobile-first responsive design.
+   ============================================ */
+
+:root {
+  --bg: #000000;
+  --bg-raised: #0a0a0a;
+  --bg-panel: #111111;
+  --bg-input: #1a1a1a;
+  --border: #2a2a2a;
+  --border-focus: #555555;
+  --text: #e0e0e0;
+  --text-dim: #888888;
+  --text-bright: #ffffff;
+  --accent: #c8a96e;
+  --accent-dim: #8a7040;
+  --danger: #cc4444;
+  --success: #44aa44;
+  --font-body: "Courier New", "Consolas", monospace;
+  --font-heading: "Segoe UI", "Helvetica Neue", sans-serif;
+  --radius: 3px;
+  --transition: 120ms ease;
+  --panel-opacity: 1;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-height: 52px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#app { width: 100%; height: 100%; display: flex; flex-direction: column; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Form elements — larger touch targets on mobile */
+input, select, textarea, button {
+  font-family: inherit; font-size: inherit;
+  color: var(--text); background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 6px 10px; outline: none;
+  transition: border-color var(--transition);
+}
+
+input:focus, select:focus, textarea:focus { border-color: var(--border-focus); }
+
+button {
+  cursor: pointer; background: var(--bg-panel);
+  border-color: var(--border);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+button:hover { background: var(--bg-input); border-color: var(--border-focus); }
+button:active { background: var(--border); }
+
+/* ---- Mobile: larger touch targets ---- */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px; /* prevents iOS zoom */
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  button {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  select { padding-right: 28px; }
+}
+
+/* Utility */
+.text-accent { color: var(--accent); }
+.text-dim { color: var(--text-dim); }
+.text-bright { color: var(--text-bright); }
+
+/* Prevent body scroll on iOS */
+@supports (-webkit-touch-callout: none) {
+  body { position: fixed; width: 100%; }
+}

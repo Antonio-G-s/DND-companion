@@ -1,0 +1,130 @@
+[
+  {
+    "name": "Longsword",
+    "category": "equipment",
+    "description": "A versatile martial weapon. 1d8 slashing (1d10 two-handed).",
+    "weight": 3,
+    "valueGP": 15,
+    "quantity": 1
+  },
+  {
+    "name": "Chain Mail",
+    "category": "equipment",
+    "description": "Heavy armor. AC 16. Str 13 required. Disadvantage on Stealth.",
+    "weight": 55,
+    "valueGP": 75,
+    "quantity": 1
+  },
+  {
+    "name": "Shield",
+    "category": "equipment",
+    "description": "+2 bonus to AC while wielded.",
+    "weight": 6,
+    "valueGP": 10,
+    "quantity": 1
+  },
+  {
+    "name": "Longbow",
+    "category": "equipment",
+    "description": "Ranged weapon. 1d8 piercing. Range 150/600.",
+    "weight": 2,
+    "valueGP": 50,
+    "quantity": 1
+  },
+  {
+    "name": "Arrows",
+    "category": "equipment",
+    "description": "Ammunition for bows. Bundle of 20.",
+    "weight": 1,
+    "valueGP": 1,
+    "quantity": 3
+  },
+  {
+    "name": "Healing Potion",
+    "category": "items",
+    "description": "Regain 2d4+2 hit points when you drink this potion.",
+    "weight": 0.5,
+    "valueGP": 50,
+    "quantity": 3
+  },
+  {
+    "name": "Rope, Hempen (50 ft)",
+    "category": "items",
+    "description": "50 feet of hempen rope. 2 hit points, can be burst with DC 17 Strength check.",
+    "weight": 10,
+    "valueGP": 1,
+    "quantity": 1
+  },
+  {
+    "name": "Torch",
+    "category": "items",
+    "description": "Bright light 20 ft, dim light 20 ft beyond. Burns for 1 hour.",
+    "weight": 1,
+    "valueGP": 0.01,
+    "quantity": 5
+  },
+  {
+    "name": "Rations (1 day)",
+    "category": "items",
+    "description": "Dry food suitable for travel. Includes jerky, dried fruit, and hardtack.",
+    "weight": 2,
+    "valueGP": 0.5,
+    "quantity": 10
+  },
+  {
+    "name": "Waterskin",
+    "category": "items",
+    "description": "Holds 4 pints of liquid.",
+    "weight": 5,
+    "valueGP": 0.2,
+    "quantity": 1
+  },
+  {
+    "name": "Bedroll",
+    "category": "items",
+    "description": "A portable sleeping roll for camping.",
+    "weight": 7,
+    "valueGP": 1,
+    "quantity": 1
+  },
+  {
+    "name": "Tinderbox",
+    "category": "items",
+    "description": "Flint, fire steel, and tinder. Light a torch or campfire as an action.",
+    "weight": 1,
+    "valueGP": 0.5,
+    "quantity": 1
+  },
+  {
+    "name": "Iron Ingot",
+    "category": "crafting",
+    "description": "A bar of refined iron suitable for smithing.",
+    "weight": 5,
+    "valueGP": 1,
+    "quantity": 10
+  },
+  {
+    "name": "Leather Scraps",
+    "category": "crafting",
+    "description": "Pieces of cured leather for crafting armor or accessories.",
+    "weight": 2,
+    "valueGP": 0.5,
+    "quantity": 4
+  },
+  {
+    "name": "Alchemist's Supplies",
+    "category": "crafting",
+    "description": "Tools for creating potions and alchemical substances. Proficiency required.",
+    "weight": 8,
+    "valueGP": 50,
+    "quantity": 1
+  },
+  {
+    "name": "Gemstone (Ruby)",
+    "category": "items",
+    "description": "A fine red ruby. Valued at approximately 500 gp.",
+    "weight": 0,
+    "valueGP": 500,
+    "quantity": 1
+  }
+]

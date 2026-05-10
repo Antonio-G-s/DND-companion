@@ -1,0 +1,67 @@
+{
+  "spells": [
+    {
+      "name": "Fire Bolt",
+      "level": 0,
+      "castingTime": "Action",
+      "school": "Evocation",
+      "range": "120 ft",
+      "components": {
+        "verbal": true,
+        "somatic": true,
+        "material": false,
+        "materialText": ""
+      },
+      "damage": {
+        "dice": "1D10",
+        "type": "Fire"
+      },
+      "description": "You hurl a mote of fire at a creature or object within range.",
+      "cantripUpgrade": "Damage increases by 1D10 at levels 5, 11, and 17.",
+      "backgroundImage": "",
+      "textColor": "#FFFFFF"
+    },
+    {
+      "name": "Magic Missile",
+      "level": 1,
+      "castingTime": "Action",
+      "school": "Evocation",
+      "range": "120 ft",
+      "components": {
+        "verbal": true,
+        "somatic": true,
+        "material": false,
+        "materialText": ""
+      },
+      "damage": {
+        "dice": "1D4+1",
+        "type": "Force"
+      },
+      "description": "You create three glowing darts of magical force. Each dart hits automatically and deals 1D4+1 force damage.",
+      "cantripUpgrade": "",
+      "backgroundImage": "",
+      "textColor": "#FFFFFF"
+    },
+    {
+      "name": "Shield",
+      "level": 1,
+      "castingTime": "Reaction",
+      "school": "Abjuration",
+      "range": "Self",
+      "components": {
+        "verbal": true,
+        "somatic": true,
+        "material": false,
+        "materialText": ""
+      },
+      "damage": {
+        "dice": "",
+        "type": ""
+      },
+      "description": "An invisible barrier of magical force appears and protects you. +5 bonus to AC until the start of your next turn.",
+      "cantripUpgrade": "",
+      "backgroundImage": "",
+      "textColor": "#FFFFFF"
+    }
+  ]
+}

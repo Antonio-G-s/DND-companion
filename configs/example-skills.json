@@ -1,0 +1,76 @@
+{
+  "level": 5,
+  "abilities": [
+    {
+      "key": "str",
+      "label": "STR",
+      "fullName": "Strength",
+      "value": 16,
+      "saveProficiency": true,
+      "skills": [
+        { "name": "Athletics", "proficiency": "proficient" }
+      ]
+    },
+    {
+      "key": "dex",
+      "label": "DEX",
+      "fullName": "Dexterity",
+      "value": 14,
+      "saveProficiency": false,
+      "skills": [
+        { "name": "Acrobatics", "proficiency": "none" },
+        { "name": "Sleight of Hand", "proficiency": "none" },
+        { "name": "Stealth", "proficiency": "proficient" }
+      ]
+    },
+    {
+      "key": "con",
+      "label": "CON",
+      "fullName": "Constitution",
+      "value": 14,
+      "saveProficiency": true,
+      "skills": []
+    },
+    {
+      "key": "int",
+      "label": "INT",
+      "fullName": "Intelligence",
+      "value": 10,
+      "saveProficiency": false,
+      "skills": [
+        { "name": "Arcana", "proficiency": "none" },
+        { "name": "History", "proficiency": "none" },
+        { "name": "Investigation", "proficiency": "none" },
+        { "name": "Nature", "proficiency": "none" },
+        { "name": "Religion", "proficiency": "none" }
+      ]
+    },
+    {
+      "key": "wis",
+      "label": "WIS",
+      "fullName": "Wisdom",
+      "value": 12,
+      "saveProficiency": false,
+      "skills": [
+        { "name": "Animal Handling", "proficiency": "none" },
+        { "name": "Insight", "proficiency": "proficient" },
+        { "name": "Medicine", "proficiency": "none" },
+        { "name": "Perception", "proficiency": "expertise" },
+        { "name": "Survival", "proficiency": "proficient" }
+      ]
+    },
+    {
+      "key": "cha",
+      "label": "CHA",
+      "fullName": "Charisma",
+      "value": 8,
+      "saveProficiency": false,
+      "skills": [
+        { "name": "Deception", "proficiency": "none" },
+        { "name": "Intimidation", "proficiency": "none" },
+        { "name": "Performance", "proficiency": "none" },
+        { "name": "Persuasion", "proficiency": "none" }
+      ]
+    }
+  ]
+}

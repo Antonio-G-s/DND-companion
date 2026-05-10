@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Wand of Fireballs",
+    "description": "This wand has 7 charges. While holding it, you can use an action to expend 1 or more of its charges to cast the Fireball spell from it. The wand regains 1d6+1 expended charges daily at dawn. If you expend the last charge, roll a d20. On a 1, the wand crumbles into ashes.",
+    "rarity": "Rare",
+    "attunement": true,
+    "charges": {
+      "max": 7,
+      "recovery": "1d6+1 at dawn"
+    },
+    "isArtificerInfusion": false,
+    "image": "",
+    "spells": [
+      { "name": "Fireball", "chargesUsed": 1 }
+    ]
+  },
+  {
+    "name": "Bag of Holding",
+    "description": "This bag has an interior space considerably larger than its outside dimensions. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet.",
+    "rarity": "Uncommon",
+    "attunement": false,
+    "charges": {
+      "max": 0,
+      "recovery": ""
+    },
+    "isArtificerInfusion": false,
+    "image": "",
+    "spells": []
+  },
+  {
+    "name": "Cloak of Protection",
+    "description": "You gain a +1 bonus to AC and saving throws while you wear this cloak.",
+    "rarity": "Uncommon",
+    "attunement": true,
+    "charges": {
+      "max": 0,
+      "recovery": ""
+    },
+    "isArtificerInfusion": true,
+    "image": "",
+    "spells": []
+  },
+  {
+    "name": "Staff of Healing",
+    "description": "This staff has 10 charges. While holding it, you can use an action to expend charges to cast one of the following spells from it. The staff regains 1d6+4 expended charges daily at dawn.",
+    "rarity": "Rare",
+    "attunement": true,
+    "charges": {
+      "max": 10,
+      "recovery": "1d6+4 at dawn"
+    },
+    "isArtificerInfusion": false,
+    "image": "",
+    "spells": [
+      { "name": "Cure Wounds", "chargesUsed": 1 },
+      { "name": "Lesser Restoration", "chargesUsed": 2 },
+      { "name": "Mass Cure Wounds", "chargesUsed": 5 }
+    ]
+  },
+  {
+    "name": "Helm of Awareness",
+    "description": "While wearing this helm, you have advantage on initiative rolls. In addition, you can't be surprised, provided you aren't incapacitated.",
+    "rarity": "Uncommon",
+    "attunement": true,
+    "charges": {
+      "max": 0,
+      "recovery": ""
+    },
+    "isArtificerInfusion": true,
+    "image": "",
+    "spells": []
+  },
+  {
+    "name": "Ring of Spell Storing",
+    "description": "This ring stores spells cast into it, holding them until the attuned wearer uses them. The ring can store up to 5 levels worth of spells at a time.",
+    "rarity": "Rare",
+    "attunement": true,
+    "charges": {
+      "max": 5,
+      "recovery": "refill by casting spells into ring"
+    },
+    "isArtificerInfusion": false,
+    "image": "",
+    "spells": []
+  }
+]

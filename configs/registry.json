@@ -1,0 +1,16 @@
+{
+  "apps": [
+    {
+      "id": "diceRoller",
+      "name": "Dice Roller",
+      "enabled": true,
+      "configPath": "./configs/diceRoller.json"
+    },
+    {
+      "id": "spellList",
+      "name": "Spell List",
+      "enabled": true,
+      "configPath": "./configs/spellList.json"
+    }
+  ]
+}
