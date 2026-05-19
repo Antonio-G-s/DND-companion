@@ -195,7 +195,7 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         data = {
-          spells: parsed.spells || [],
+          spells: (parsed.spells || []).map((s: any): FullSpell => ({ ...blankSpell(), ...s })),
           slotPools: parsed.slotPools || [],
           casterClasses: parsed.casterClasses || [{ name: "Wizard", ability: "int" }],
           preparedLimit: parsed.preparedLimit ?? 0,
@@ -286,21 +286,40 @@
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "spellcasting.json"; a.click();
+    a.href = url;
+    a.download = "spellcasting.json";
+    a.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
 
   function importData() {
     const input = document.createElement("input");
-    input.type = "file"; input.accept = ".json";
-    input.onchange = async () => {
-      const file = input.files?.[0]; if (!file) return;
+    input.type = "file";
+    input.accept = ".json";
+    input.style.cssText = "position:absolute;left:-9999px;top:-9999px;opacity:0;";
+    document.body.appendChild(input);
+
+    input.addEventListener("change", async () => {
+      if (document.body.contains(input)) document.body.removeChild(input);
+      const file = input.files?.[0];
+      if (!file) return;
       try {
         const text = await file.text();
         const parsed = JSON.parse(text);
-        if (parsed.spells) { data = { ...data, ...parsed }; save(); }
+        if (parsed.spells) {
+          data = {
+            ...data,
+            ...parsed,
+            spells: (parsed.spells as any[]).map((s: any): FullSpell => ({ ...blankSpell(), ...s })),
+          };
+          save();
+        }
       } catch {}
-    };
+    });
+
     input.click();
   }
 

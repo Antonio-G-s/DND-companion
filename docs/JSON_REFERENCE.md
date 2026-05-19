@@ -60,6 +60,7 @@ The legacy spell-card view. For a full spellcasting manager use [Spellcasting](#
 Spell {
   name:           string        // "Fireball"
   level:          number        // 0 = cantrip, 1–9 = spell level
+  concentration:  boolean       // true = requires concentration
   castingTime:    string        // "Action" | "Bonus Action" | "Reaction" | "1 Minute" …
   school:         string        // "Evocation" | "Abjuration" | "Conjuration" …
   range:          string        // "Self" | "Touch" | "60 ft" …
@@ -88,6 +89,7 @@ Spell {
     {
       "name": "Eldritch Blast",
       "level": 0,
+      "concentration": false,
       "castingTime": "Action",
       "school": "Evocation",
       "range": "120 ft",
@@ -101,6 +103,7 @@ Spell {
     {
       "name": "Counterspell",
       "level": 3,
+      "concentration": false,
       "castingTime": "Reaction",
       "school": "Abjuration",
       "range": "60 ft",

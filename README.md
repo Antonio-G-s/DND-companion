@@ -2,6 +2,12 @@
 
 A lightweight, modular Dungeons & Dragons companion app built with **Tauri v2**, **Svelte**, **TypeScript**, and **Rust**.
 
+> **Windows installer** → [`releases/DnD-Companion-0.3.0-setup.exe`](releases/DnD-Companion-0.3.0-setup.exe) (2 MB, requires WebView2 — installed automatically on Windows 10/11)
+
+See [CHANGELOG.md](CHANGELOG.md) for what's new.
+
+---
+
 ## Architecture
 
 The app is a black workspace where **sub apps** open as draggable internal windows. Sub apps communicate through a **JSON event bus**.
@@ -45,6 +51,8 @@ Response:
 ## Documentation
 
 - [JSON Reference & AI Prompts](docs/JSON_REFERENCE.md) — full schema for every sub app, worked examples, and copy-paste AI prompts to generate character data
+- [Character Import Guide](docs/CHARACTER_IMPORT_GUIDE.md) — per-app JSON formats and the full-character export schema
+- [Changelog](CHANGELOG.md) — version history and release notes
 
 ## Setup
 
@@ -138,24 +146,34 @@ configs/
 - Roll history
 - Listens on the bus for roll requests
 
-### Spell List
-- Spell cards loaded from JSON
-- Add / edit / delete spells
-- Import / export spell JSON files
+### Spell List *(legacy)*
+- Spell cards with school-colored accents
+- Add / edit / delete spells; import / export JSON
+- Shows **Cantrip** / **Level X** and **Conc** badge per spell
 - Clickable damage dice → sends roll request to Dice Roller
-- School-colored card accents
-- Cantrip upgrade display for level 0 spells
+
+### Spellcasting *(recommended)*
+- Full spellcasting manager: spell list + slot pools + caster config
+- Prepared / always-prepared / readied spell tracking with limit
+- Spell attack bonus and save DC per caster class
+- Upcasting with per-level effect text
+- Short rest (Pact Magic) and long rest slot recovery
+- Concentration and ritual tags; free-use tracking
+- Migrates data from legacy Spell List and Spell Slots on first open
+
+### Character Profile
+- Multi-character switcher — each character stores all sub-app data separately
+- Selective export: choose which sections to include in the JSON
+- Full import with drag-and-drop, file picker, path input, and paste-JSON — works on both desktop and mobile
 
 ### Other Sub Apps
-- **HP Tracker** — current / max HP with temp HP and death saves
-- **Spell Slots** — track spell slot usage per level
-- **Spellcasting** — spellcasting ability, save DC, and attack bonus
-- **Skills** — skill list with proficiency toggles
+- **HP Tracker** — current / max / temp HP, AC component list
+- **Spell Slots** *(legacy)* — standalone slot tracker; migrates into Spellcasting
+- **Skills** — six ability scores, skill proficiencies, saving throws
 - **Weapons & Cantrips** — attack actions with roll integration
-- **Inventory** — general equipment list
-- **Magic Items** — attunement-aware magic item tracker
-- **Gold Purse** — multi-denomination currency tracker (GP/SP/CP)
-- **Traits** — personality traits, ideals, bonds, flaws
-- **Proficiencies** — armor, weapon, tool, and language proficiencies
-- **Notes** — freeform session notes
-- **Character Profile** — name, race, class, background, and stats
+- **Inventory** — equipment, items, and crafting materials with weapon stats
+- **Magic Items** — attunement-aware tracker with charges and linked spells
+- **Gold Purse** — PP / GP / EP / SP / CP with transaction log
+- **Traits & Feats** — class features, species traits, feats with use tracking
+- **Proficiencies** — armor, weapon, tool, and language lists
+- **Notes** — per-session freeform notes with image attachments

@@ -46,6 +46,7 @@ export interface SpellDamage {
 export interface Spell {
   name: string;
   level: number;
+  concentration: boolean;
   castingTime: string;
   school: string;
   range: string;

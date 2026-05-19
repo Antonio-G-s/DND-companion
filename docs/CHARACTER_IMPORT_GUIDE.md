@@ -1,66 +1,105 @@
-# D&D Companion — Character Import Guide
+# D&D Companion — Character Import / Export Guide
 
-This document describes the JSON format for each sub-app, enabling a future
-**bulk "Import Character"** feature that loads a single JSON file and distributes
-data to every sub-app at once.
+The **Character Profile** app can export and import the entire character state — every sub-app — as a single JSON file.
 
 ---
 
-## Planned Bulk Import Format
+## How to Export
+
+1. Open **Character Profile**.
+2. Click **↓ Export Character**.
+3. A checklist dialog appears with every data section checked. Uncheck any section you want to exclude. **Character Profile** (name, class, species, etc.) is always included.
+4. Click **↓ Export** — a `<charactername>_character.json` file is downloaded.
+
+Use **All** / **None** quick-links to check or clear all sections at once.
+
+---
+
+## How to Import
+
+1. Open **Character Profile**.
+2. Click **↑ Import Character**.
+3. The import dialog offers four ways to load a file:
+   - **Drag and drop** a `.json` file onto the drop zone.
+   - **Choose File** — opens a native file picker.
+   - **Read Path** — enter a full file path (desktop only, uses Tauri filesystem API).
+   - **Paste JSON** — paste the exported JSON directly into the text area and click **Analyze Text**.
+4. A preview shows which sections were found and which are missing.
+5. Choose **New character slot** (keeps your current character) or **Replace current character**.
+6. Click **Confirm Import**.
+
+Missing sections in the imported file are simply skipped — existing sub-app data for those sections is cleared to avoid stale data.
+
+---
+
+## Full Export Format
 
 ```json
 {
-  "character": {
-    "name": "Thorn Ironbark",
-    "class": "Fighter 5 / Wizard 2",
-    "species": "Half-Elf",
-    "background": "Soldier"
+  "_meta": {
+    "version": "1.0.0",
+    "exportDate": "2026-05-19T12:00:00.000Z",
+    "appName": "D&D Companion",
+    "characterName": "Lyra Ashveil"
   },
-  "skills": { ... },
-  "hpTracker": { ... },
-  "inventory": { ... },
-  "goldPurse": { ... },
-  "spellcasting": { ... },
-  "magicItems": [ ... ],
-  "traits": [ ... ],
+  "profile":       { ... },
+  "skills":        { ... },
+  "hpTracker":     { ... },
+  "inventory":     { ... },
+  "goldPurse":     { ... },
+  "spellcasting":  { ... },
+  "magicItems":    [ ... ],
+  "traits":        [ ... ],
   "proficiencies": { ... },
-  "notes": [ ... ]
+  "notes":         [ ... ],
+  "spellList":     [ ... ],
+  "spellSlots":    { ... },
+  "weaponsCantripsPref": { ... }
 }
 ```
 
-The import function will parse each top-level key and write it to the
-corresponding localStorage slot. Missing keys are skipped (existing data kept).
+`spellList` and `spellSlots` are the legacy apps — they are migrated automatically into `spellcasting` on first load of the Spellcasting app.
+
+See [JSON_REFERENCE.md](JSON_REFERENCE.md) for the full schema of each section.
 
 ---
 
 ## Per-App JSON Formats
 
-### 1. Skills (`dnd-skills`)
+### Profile (`dnd-profile`)
 
 ```json
 {
-  "level": 5,
+  "name": "Lyra Ashveil",
+  "subtitle": "The Shadow Step",
+  "alignment": "Chaotic Good",
+  "species": "Wood Elf",
+  "classes": "Rogue 7",
+  "level": 7,
+  "description": "...",
+  "backstory": "...",
+  "profileImage": "",
+  "partyLogo": "",
+  "partyName": "The Dusk Wardens",
+  "tags": [],
+  "version": "1.0.0",
+  "lastSaved": 1716120000000
+}
+```
+
+### Skills (`dnd-skills`)
+
+```json
+{
+  "level": 7,
   "abilities": [
     {
-      "key": "str",
-      "label": "STR",
-      "fullName": "Strength",
-      "value": 16,
-      "saveProficiency": true,
+      "key": "dex", "label": "DEX", "fullName": "Dexterity",
+      "value": 20, "saveProficiency": true,
       "skills": [
-        { "name": "Athletics", "proficiency": "proficient" }
-      ]
-    },
-    {
-      "key": "dex",
-      "label": "DEX",
-      "fullName": "Dexterity",
-      "value": 14,
-      "saveProficiency": false,
-      "skills": [
-        { "name": "Acrobatics", "proficiency": "none" },
-        { "name": "Sleight of Hand", "proficiency": "none" },
-        { "name": "Stealth", "proficiency": "expertise" }
+        { "name": "Acrobatics",     "proficiency": "expertise" },
+        { "name": "Sleight of Hand","proficiency": "proficient" },
+        { "name": "Stealth",        "proficiency": "expertise" }
       ]
     }
   ]
@@ -69,202 +108,94 @@ corresponding localStorage slot. Missing keys are skipped (existing data kept).
 
 **Proficiency values:** `"none"` | `"proficient"` | `"expertise"`
 
-Ability keys: `str`, `dex`, `con`, `int`, `wis`, `cha`
-
-Skills per ability:
-- STR: Athletics
-- DEX: Acrobatics, Sleight of Hand, Stealth
-- CON: (none)
-- INT: Arcana, History, Investigation, Nature, Religion
-- WIS: Animal Handling, Insight, Medicine, Perception, Survival
-- CHA: Deception, Intimidation, Performance, Persuasion
-
----
-
-### 2. HP Tracker (`dnd-hptracker`)
+### HP Tracker (`dnd-hptracker`)
 
 ```json
 {
-  "maxHp": 45,
-  "currentHp": 45,
+  "maxHp": 52,
+  "currentHp": 52,
   "tempHp": 0,
   "acEffects": [
-    { "name": "Base", "value": 10 },
-    { "name": "DEX", "value": 2 },
-    { "name": "Chain Mail", "value": 6 },
-    { "name": "Shield", "value": 2 }
+    { "name": "Base",            "value": 10 },
+    { "name": "DEX mod",         "value": 5 },
+    { "name": "Studded Leather", "value": 1 }
   ]
 }
 ```
 
----
+`totalAC` is the sum of all `acEffects[].value`.
 
-### 3. Inventory (`dnd-inventory`)
+### Inventory (`dnd-inventory`)
 
 ```json
 {
   "maxAttunement": 3,
   "items": [
     {
-      "name": "Longsword",
+      "name": "Rapier",
       "category": "equipment",
       "equipmentType": "weapon",
-      "description": "Versatile martial weapon.",
-      "weight": 3,
-      "valueGP": 15,
-      "quantity": 1,
-      "attuned": false,
-      "linkedMagicItem": "",
+      "description": "Finesse weapon.",
+      "weight": 2, "valueGP": 25, "quantity": 1,
+      "attuned": false, "linkedMagicItem": "",
       "weapon": {
-        "attackAbility": "str",
-        "damageDice": "1D8",
-        "damageType": "Slashing",
-        "properties": "Versatile (1D10)",
-        "magicBonus": 0,
-        "range": "5 ft"
+        "attackAbility": "finesse",
+        "damageDice": "1D8", "damageType": "Piercing",
+        "properties": "Finesse", "magicBonus": 0, "range": "5 ft"
       }
-    },
-    {
-      "name": "Chain Mail",
-      "category": "equipment",
-      "equipmentType": "armor",
-      "description": "Heavy armor. AC 16.",
-      "weight": 55,
-      "valueGP": 75,
-      "quantity": 1,
-      "attuned": false,
-      "linkedMagicItem": "",
-      "weapon": null
-    },
-    {
-      "name": "Healing Potion",
-      "category": "items",
-      "equipmentType": "general",
-      "description": "Regain 2d4+2 hit points.",
-      "weight": 0.5,
-      "valueGP": 50,
-      "quantity": 3,
-      "attuned": false,
-      "linkedMagicItem": "",
-      "weapon": null
     }
   ]
 }
 ```
 
-**Categories:** `"equipment"` | `"items"` | `"crafting"`
+**`weapon` is `null` for non-weapon items.**
 
-**Equipment types:** `"general"` | `"weapon"` | `"armor"` | `"magicWeapon"` | `"magicArmor"` | `"magicEquipment"`
-
-**Attack ability:** `"str"` | `"dex"` | `"finesse"`
-
-**`weapon`** is `null` for non-weapon items.
-
----
-
-### 4. Gold Purse (`dnd-goldpurse`)
+### Gold Purse (`dnd-goldpurse`)
 
 ```json
 {
-  "purse": {
-    "pp": 0,
-    "gp": 150,
-    "ep": 0,
-    "sp": 30,
-    "cp": 50
-  },
+  "purse": { "pp": 0, "gp": 154, "ep": 0, "sp": 37, "cp": 12 },
   "transactions": []
 }
 ```
 
----
-
-### 5. Spellcasting (`dnd-spellcasting`)
+### Spellcasting (`dnd-spellcasting`)
 
 ```json
 {
-  "characterLevel": 5,
-  "preparedLimit": 8,
-  "casterClasses": [
-    { "name": "Wizard", "ability": "int" }
-  ],
+  "characterLevel": 7,
+  "preparedLimit": 0,
+  "casterClasses": [{ "name": "Wizard", "ability": "int" }],
   "slotPools": [
     {
       "name": "Spell Slots",
       "recovery": "longRest",
-      "levels": [4, 3, 2, 0, 0, 0, 0, 0, 0],
-      "used": [
-        [false, false, false, false],
-        [false, false, false],
-        [false, false],
-        [], [], [], [], [], []
-      ]
+      "levels": [4, 3, 3, 1, 0, 0, 0, 0, 0],
+      "used": [[false,false,false,false],[false,false,false],[false,false,false],[false],[],[],[],[],[]]
     }
   ],
   "spells": [
     {
       "id": "abc123",
-      "name": "Fire Bolt",
-      "level": 0,
-      "castingTime": "Action",
-      "range": "120 ft",
-      "duration": "Instantaneous",
-      "school": "Evocation",
-      "components": {
-        "verbal": true,
-        "somatic": true,
-        "material": false,
-        "materialText": ""
-      },
-      "description": "You hurl a mote of fire at a creature or object.",
-      "damageDice": "1D10",
-      "damageType": "Fire",
-      "healingDice": "",
-      "effectSummary": "",
-      "savingThrow": "",
-      "spellAttack": true,
-      "concentration": false,
-      "ritual": false,
-      "cantripUpgrade": "Damage increases by 1D10 at levels 5, 11, and 17.",
-      "origin": "class",
-      "originSource": "Wizard",
-      "usesSlot": false,
-      "freeUses": 0,
-      "freeUsesRemaining": 0,
-      "alwaysPrepared": false,
-      "prepared": true,
-      "upcastLevels": []
-    },
-    {
-      "id": "def456",
       "name": "Fireball",
       "level": 3,
+      "concentration": false,
       "castingTime": "Action",
       "range": "150 ft",
       "duration": "Instantaneous",
       "school": "Evocation",
       "components": { "verbal": true, "somatic": true, "material": true, "materialText": "A tiny ball of bat guano and sulfur" },
-      "description": "A bright streak flashes from your pointing finger to a point you choose...",
-      "damageDice": "8D6",
-      "damageType": "Fire",
-      "healingDice": "",
-      "effectSummary": "",
-      "savingThrow": "DEX",
-      "spellAttack": false,
-      "concentration": false,
-      "ritual": false,
-      "cantripUpgrade": "",
-      "origin": "class",
-      "originSource": "Wizard",
-      "usesSlot": true,
-      "freeUses": 0,
-      "freeUsesRemaining": 0,
-      "alwaysPrepared": false,
-      "prepared": true,
+      "description": "A bright streak flashes from your pointing finger...",
+      "damageDice": "8D6", "damageType": "Fire",
+      "healingDice": "", "effectSummary": "8D6 fire, DEX save",
+      "savingThrow": "DEX", "spellAttack": false,
+      "ritual": false, "cantripUpgrade": "",
+      "origin": "class", "originSource": "Wizard",
+      "usesSlot": true, "freeUses": 0, "freeUsesRemaining": 0,
+      "alwaysPrepared": false, "prepared": true,
       "upcastLevels": [
-        { "level": 4, "effect": "9D6" },
-        { "level": 5, "effect": "10D6" },
-        { "level": 6, "effect": "11D6" }
+        { "level": 4, "effect": "9D6 fire" },
+        { "level": 5, "effect": "10D6 fire" }
       ]
     }
   ]
@@ -273,13 +204,30 @@ Skills per ability:
 
 **Spell origins:** `"class"` | `"subclass"` | `"feat"` | `"species"` | `"magicItem"` | `"other"`
 
-**Spellcasting ability:** `"int"` | `"wis"` | `"cha"`
+### Spell List — legacy (`dnd-spelllist`)
 
-**Recovery:** `"longRest"` | `"shortRest"`
+Auto-migrated into Spellcasting on first load.
 
----
+```json
+[
+  {
+    "name": "Fire Bolt",
+    "level": 0,
+    "concentration": false,
+    "castingTime": "Action",
+    "school": "Evocation",
+    "range": "120 ft",
+    "components": { "verbal": true, "somatic": true, "material": false, "materialText": "" },
+    "damage": { "dice": "1D10", "type": "Fire" },
+    "description": "You hurl a mote of fire at a creature or object.",
+    "cantripUpgrade": "Damage increases by 1D10 at levels 5, 11, and 17.",
+    "backgroundImage": "",
+    "textColor": "#FFFFFF"
+  }
+]
+```
 
-### 6. Magic Items (`dnd-magicitems`)
+### Magic Items (`dnd-magicitems`)
 
 ```json
 [
@@ -292,104 +240,71 @@ Skills per ability:
       "charges": { "max": 7, "recovery": "1d6+1 at dawn" },
       "isArtificerInfusion": false,
       "image": "",
-      "spells": [
-        { "name": "Fireball", "chargesUsed": 1 }
-      ]
+      "spells": [{ "name": "Fireball", "chargesUsed": 1 }]
     },
     "chargesUsed": [false, false, false, false, false, false, false]
   }
 ]
 ```
 
-**Rarities:** `"Common"` | `"Uncommon"` | `"Rare"` | `"Very Rare"` | `"Legendary"` | `"Artifact"`
-
----
-
-### 7. Traits & Feats (`dnd-traits`)
+### Traits & Feats (`dnd-traits`)
 
 ```json
 [
   {
-    "id": "xyz789",
+    "id": "cf001",
     "category": "classFeature",
-    "title": "Second Wind",
-    "description": "Regain 1d10 + fighter level HP as a bonus action.",
-    "source": "Fighter 1",
+    "title": "Sneak Attack",
+    "description": "Once per turn, deal extra 4D6 damage when you have advantage on an attack roll.",
+    "source": "Rogue 1",
     "levelObtained": 1,
-    "uses": { "max": 1, "current": 1, "recharge": "Short Rest" },
-    "linkedSkills": [],
-    "linkedSpells": [],
-    "passive": false
+    "uses": { "max": 0, "current": 0, "recharge": "" },
+    "linkedSkills": [], "linkedSpells": [],
+    "passive": true
   }
 ]
 ```
 
 **Categories:** `"classFeature"` | `"speciesTrait"` | `"feat"`
 
-**Recharge:** `""` | `"Short Rest"` | `"Long Rest"` | `"Dawn"`
-
----
-
-### 8. Proficiencies (`dnd-proficiencies`)
+### Proficiencies (`dnd-proficiencies`)
 
 ```json
 {
-  "languages": ["Common", "Elvish", "Dwarvish"],
-  "tools": ["Thieves' Tools"],
-  "armor": ["Light Armor", "Medium Armor", "Shields"],
-  "weapons": ["Simple Weapons", "Martial Weapons"]
+  "languages": ["Common", "Elvish", "Thieves' Cant"],
+  "tools":     ["Thieves' Tools", "Poisoner's Kit"],
+  "armor":     ["Light Armor"],
+  "weapons":   ["Simple Weapons", "Hand Crossbow", "Longsword", "Rapier", "Shortsword"]
 }
 ```
 
----
-
-### 9. Notes (`dnd-notes`)
+### Notes (`dnd-notes`)
 
 ```json
 [
   {
-    "id": "abc",
-    "date": "2024-03-15",
-    "title": "Session 1 — The Tavern",
-    "content": "We met at the Prancing Pony...",
+    "id": "session01",
+    "date": "2026-05-15",
+    "title": "Session 12 — The Ruined Keep",
+    "content": "Party entered at dusk...",
     "images": [],
-    "createdAt": 1710500000000,
-    "updatedAt": 1710500000000
+    "createdAt": 1747300000000,
+    "updatedAt": 1747303600000
   }
 ]
 ```
 
-Images are stored as base64 data URIs: `{ "data": "data:image/png;base64,...", "name": "map.png" }`
-
 ---
 
-### 10. Spell Slots (legacy, `dnd-spellslots`)
+## Partial Exports
 
-Migrated automatically into the Spellcasting app on first load.
+The export dialog lets you choose which sections to include. A partial export is still a valid import file — missing sections are simply skipped on import.
 
-### 11. Spell List (legacy, `dnd-spelllist`)
-
-Migrated automatically into the Spellcasting app on first load.
-
----
-
-## Future: Bulk Import Implementation
-
-The import button will:
-
-1. Accept a single `.json` file matching the format above
-2. Parse each top-level key
-3. Write to the corresponding `localStorage` key:
-   - `character.skills` → `dnd-skills`
-   - `character.hpTracker` → `dnd-hptracker`
-   - `character.inventory` → `dnd-inventory`
-   - `character.goldPurse` → `dnd-goldpurse`
-   - `character.spellcasting` → `dnd-spellcasting`
-   - `character.magicItems` → `dnd-magicitems`
-   - `character.traits` → `dnd-traits`
-   - `character.proficiencies` → `dnd-proficiencies`
-   - `character.notes` → `dnd-notes`
-4. Refresh all open sub-apps
-5. Show a summary of what was imported
-
-Missing keys are skipped. Existing data for present keys is overwritten.
+Example minimal export (profile + spells only):
+```json
+{
+  "_meta": { ... },
+  "profile": { ... },
+  "spellcasting": { ... }
+}
+```

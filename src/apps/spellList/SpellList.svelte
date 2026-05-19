@@ -34,6 +34,7 @@
     return {
       name: "",
       level: 0,
+      concentration: false,
       castingTime: "Action",
       school: "Evocation",
       range: "30 ft",
@@ -80,7 +81,14 @@
   function loadSpellsFromStorage(): Spell[] {
     try {
       const raw = window.localStorage.getItem("dnd-spelllist");
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        return (JSON.parse(raw) as any[]).map((s: any): Spell => ({
+          ...blankSpell(),
+          ...s,
+          level: s.level ?? 0,
+          concentration: s.concentration ?? false,
+        }));
+      }
     } catch {}
     return [];
   }
@@ -147,7 +155,10 @@
     const a = document.createElement("a");
     a.href = url;
     a.download = "spells.json";
+    a.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
 
@@ -156,20 +167,30 @@
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
-    input.onchange = async () => {
+    input.style.cssText = "position:absolute;left:-9999px;top:-9999px;opacity:0;";
+    document.body.appendChild(input);
+
+    input.addEventListener("change", async () => {
+      if (document.body.contains(input)) document.body.removeChild(input);
       const file = input.files?.[0];
       if (!file) return;
       try {
         const text = await file.text();
         const data = JSON.parse(text);
         if (Array.isArray(data)) {
-          spells = data;
+          spells = (data as any[]).map((s: any): Spell => ({
+            ...blankSpell(),
+            ...s,
+            level: s.level ?? 0,
+            concentration: s.concentration ?? false,
+          }));
           saveSpellsToStorage();
         }
       } catch {
         console.error("Invalid spell JSON file");
       }
-    };
+    });
+
     input.click();
   }
 
@@ -178,6 +199,7 @@
       {
         name: "Fire Bolt",
         level: 0,
+        concentration: false,
         castingTime: "Action",
         school: "Evocation",
         range: "120 ft",
@@ -191,6 +213,7 @@
       {
         name: "Magic Missile",
         level: 1,
+        concentration: false,
         castingTime: "Action",
         school: "Evocation",
         range: "120 ft",
@@ -204,6 +227,7 @@
       {
         name: "Shield",
         level: 1,
+        concentration: false,
         castingTime: "Reaction",
         school: "Abjuration",
         range: "Self",
@@ -260,12 +284,15 @@
 
       <div class="form-row">
         <label class="narrow">
-          Level (0–10)
-          <input type="number" bind:value={formSpell.level} min="0" max="10" />
+          Level (0–9)
+          <input type="number" bind:value={formSpell.level} min="0" max="9" />
         </label>
         <label>
           Casting Time
           <input type="text" bind:value={formSpell.castingTime} placeholder="Action" />
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" bind:checked={formSpell.concentration} /> Concentration
         </label>
       </div>
 
@@ -341,9 +368,14 @@
       >
         <div class="card-header">
           <span class="spell-name">{spell.name}</span>
-          <span class="spell-level">
-            {spell.level === 0 ? "Cantrip" : `Lvl ${spell.level}`}
-          </span>
+          <div class="level-conc">
+            <span class="spell-level">
+              {spell.level === 0 ? "Cantrip" : `Level ${spell.level}`}
+            </span>
+            {#if spell.concentration}
+              <span class="conc-badge">Conc</span>
+            {/if}
+          </div>
         </div>
 
         <div class="card-meta">
@@ -538,6 +570,23 @@
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+
+  .level-conc {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .conc-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    background: rgba(204, 136, 51, 0.15);
+    color: #cc8833;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
   }
 
   .card-meta {
