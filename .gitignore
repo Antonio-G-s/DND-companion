@@ -27,6 +27,9 @@ desktop.ini
 # Editor
 .vscode/settings.json
 .idea/
+
+# Claude Code
+.claude/
 *.suo
 *.user
 
