@@ -69,10 +69,18 @@
     }
   }
 
-  function stopAll() { dragging = false; resizing = ""; }
+  function stopAll() {
+    const changed = dragging || resizing !== "";
+    dragging = false;
+    resizing = "";
+    if (changed) dispatch("layoutChange", { appId });
+  }
 
   function close() { dispatch("close", { appId }); }
-  function toggleMinimize() { minimized = !minimized; }
+  function toggleMinimize() {
+    minimized = !minimized;
+    dispatch("layoutChange", { appId });
+  }
 
   function getPoint(e: MouseEvent | TouchEvent): { x: number; y: number } {
     if ("touches" in e && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };

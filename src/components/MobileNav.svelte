@@ -11,19 +11,18 @@
   export let apps: SubAppEntry[] = [];
   export let activeAppId: string = "";
   export let characterName: string = "";
-
-  let showDrawer = false;
+  export let drawerOpen = false;
 
   const dispatch = createEventDispatcher();
 
   function openApp(appId: string) {
     dispatch("open", { appId });
-    showDrawer = false;
+    drawerOpen = false;
   }
 
   function openSettings() {
     dispatch("settings");
-    showDrawer = false;
+    drawerOpen = false;
   }
 
   const ICONS: Record<string, string> = {
@@ -41,10 +40,10 @@
 </script>
 
 <!-- App drawer overlay -->
-{#if showDrawer}
+{#if drawerOpen}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
-  <div class="drawer-overlay" on:click={() => { showDrawer = false; }}></div>
+  <div class="drawer-overlay" on:click={() => { drawerOpen = false; }}></div>
 
   <div class="drawer">
     <div class="drawer-handle"></div>
@@ -53,7 +52,7 @@
       {#each apps as app (app.id)}
         <button
           class="drawer-item"
-          class:active={activeAppId === app.id}
+          class:active={activeAppId === app.id || (!activeAppId && app.id === "characterProfile")}
           on:click={() => openApp(app.id)}
         >
           <span class="di-icon">{ICONS[app.id] || "◆"}</span>
@@ -73,14 +72,14 @@
   {#each quickApps as app (app.id)}
     <button
       class="nav-btn"
-      class:active={activeAppId === app.id}
+      class:active={activeAppId === app.id || (!activeAppId && app.id === "characterProfile")}
       on:click={() => openApp(app.id)}
     >
       <span class="nav-icon">{ICONS[app.id] || "◆"}</span>
       <span class="nav-label">{app.name}</span>
     </button>
   {/each}
-  <button class="nav-btn grid-btn" on:click={() => { showDrawer = !showDrawer; }}>
+  <button class="nav-btn grid-btn" on:click={() => { drawerOpen = !drawerOpen; }}>
     <span class="nav-icon">⊞</span>
     <span class="nav-label">More</span>
   </button>
@@ -89,6 +88,10 @@
 <style>
   /* ---- Bottom nav ---- */
   .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     height: var(--nav-height);
     padding-bottom: var(--safe-bottom);
@@ -131,27 +134,26 @@
 
   .drawer {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
-    max-height: 70vh;
+    top: 0; bottom: 0; left: 0;
+    width: min(84vw, 320px);
     background: var(--bg-panel);
-    border-top: 1px solid var(--border);
-    border-radius: 12px 12px 0 0;
+    border-right: 1px solid var(--border);
     z-index: 999;
-    padding: 8px 16px calc(var(--nav-height) + var(--safe-bottom) + 8px);
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px calc(var(--nav-height) + var(--safe-bottom) + 12px);
     overflow-y: auto;
-    animation: slideUp 200ms ease;
+    animation: slideFromLeft 180ms ease;
   }
 
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+  @keyframes slideFromLeft {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
   }
 
   .drawer-handle {
     width: 36px; height: 4px;
     background: var(--border);
     border-radius: 2px;
-    margin: 0 auto 10px;
+    margin: 0 0 10px;
   }
 
   .drawer-title {
@@ -162,17 +164,16 @@
   }
 
   .drawer-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .drawer-item {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 4px; padding: 12px 4px;
+    display: flex; align-items: center; justify-content: flex-start;
+    gap: 10px; padding: 9px 10px;
     background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; min-height: 0;
+    border-radius: 4px; min-height: 44px;
     color: var(--text-dim);
     transition: all var(--transition);
   }
@@ -180,8 +181,8 @@
   .drawer-item:active { background: var(--bg-input); }
   .drawer-item.active { color: var(--accent); border-color: var(--accent-dim); }
 
-  .di-icon { font-size: 20px; }
-  .di-name { font-size: 10px; text-align: center; line-height: 1.2; }
+  .di-icon { font-size: 20px; width: 24px; flex-shrink: 0; text-align: center; }
+  .di-name { font-size: 12px; text-align: left; line-height: 1.2; }
 
   .settings-item { border-style: dashed; }
 </style>

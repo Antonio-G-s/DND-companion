@@ -30,6 +30,21 @@
   import type { WindowState } from "./lib/types";
 
   const apps = getEnabledApps();
+  const SETTINGS_KEY = "dnd-app-settings";
+  const WINDOW_LAYOUT_KEY = "dnd-window-layout";
+  const MOBILE_LAYOUT_KEY = "dnd-mobile-layout";
+  const MIN_WINDOW_WIDTH = 240;
+  const MIN_WINDOW_HEIGHT = 160;
+  const EDGE_SWIPE_START = 24;
+  const EDGE_SWIPE_TRIGGER = 64;
+
+  type SavedWindowBounds = Pick<WindowState, "x" | "y" | "width" | "height" | "minimized">;
+
+  interface SavedWindowLayout {
+    windows: WindowState[];
+    bounds: Record<string, SavedWindowBounds>;
+    zCounter: number;
+  }
 
   // ============ LAYOUT MODE ============
 
@@ -51,6 +66,9 @@
 
   let windows: WindowState[] = [];
   let zCounter = 1;
+  let windowLayoutReady = false;
+  let windowLayoutSaveTimer: number | undefined;
+  let rememberedWindowBounds: Record<string, SavedWindowBounds> = {};
   $: openAppIds = windows.map((w) => w.appId);
 
   const defaults: Record<string, Partial<WindowState>> = {
@@ -73,6 +91,13 @@
   // ============ MOBILE STATE ============
 
   let mobileActiveAppId: string = "";
+  let mobileAppHistory: string[] = [];
+  let mobileMenuOpen = false;
+  let mobileLayoutReady = false;
+  let edgeSwipeTracking = false;
+  let edgeSwipePointerId: number | null = null;
+  let edgeSwipeStartX = 0;
+  let edgeSwipeStartY = 0;
 
   // ============ WORKSPACE SETTINGS ============
 
@@ -98,6 +123,8 @@
 
   onMount(() => {
     loadSettings();
+    loadWindowLayout();
+    loadMobileLayout();
     loadCharName();
     applyTheme();
 
@@ -107,7 +134,7 @@
     eventBus.subscribe("*", (msg) => {
       if (msg.action === "openApp" && typeof msg.appId === "string") {
         if (isMobile) {
-          mobileActiveAppId = msg.appId;
+          openMobileApp(msg.appId);
         } else {
           openApp(msg.appId);
         }
@@ -121,8 +148,21 @@
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      if (windowLayoutSaveTimer !== undefined) window.clearTimeout(windowLayoutSaveTimer);
     };
   });
+
+  $: if (windowLayoutReady) {
+    windows;
+    zCounter;
+    scheduleWindowLayoutSave();
+  }
+
+  $: if (mobileLayoutReady) {
+    mobileActiveAppId;
+    mobileAppHistory;
+    saveMobileLayout();
+  }
 
   function loadCharName() {
     try {
@@ -135,7 +175,7 @@
 
   function loadSettings() {
     try {
-      const raw = window.localStorage.getItem("dnd-app-settings");
+      const raw = window.localStorage.getItem(SETTINGS_KEY);
       if (!raw) return;
       const s = JSON.parse(raw);
       panX = s.panX ?? 0; panY = s.panY ?? 0; zoom = s.zoom ?? 1;
@@ -150,7 +190,7 @@
 
   function saveSettings() {
     try {
-      window.localStorage.setItem("dnd-app-settings", JSON.stringify({
+      window.localStorage.setItem(SETTINGS_KEY, JSON.stringify({
         panX, panY, zoom, bgImage, bgDim, panelOpacity,
         gridSnap, gridSize, showGrid, accentColor, layoutPref,
       }));
@@ -172,12 +212,155 @@
   function onSettingsReset() { panX = 0; panY = 0; layoutPref = "auto"; saveSettings(); }
   function resetView() { panX = 0; panY = 0; zoom = 1; saveSettings(); }
 
+  // ============ WINDOW LAYOUT PERSISTENCE ============
+
+  function loadWindowLayout() {
+    try {
+      const raw = window.localStorage.getItem(WINDOW_LAYOUT_KEY);
+      if (!raw) {
+        windowLayoutReady = true;
+        return;
+      }
+
+      const saved = JSON.parse(raw) as Partial<SavedWindowLayout>;
+      const restored = Array.isArray(saved.windows)
+        ? saved.windows.map(normalizeSavedWindow).filter(Boolean) as WindowState[]
+        : [];
+
+      rememberedWindowBounds = normalizeSavedBounds(saved.bounds);
+      restored.forEach((win) => rememberWindowBounds(win));
+
+      windows = restored;
+      const highestZ = restored.reduce((max, win) => Math.max(max, win.zIndex), 1);
+      zCounter = Math.max(saved.zCounter ?? 1, highestZ);
+    } catch {}
+
+    windowLayoutReady = true;
+  }
+
+  function normalizeSavedBounds(bounds: unknown): Record<string, SavedWindowBounds> {
+    if (!bounds || typeof bounds !== "object") return {};
+    const next: Record<string, SavedWindowBounds> = {};
+
+    for (const [appId, value] of Object.entries(bounds as Record<string, Partial<SavedWindowBounds>>)) {
+      const app = apps.find((entry) => entry.id === appId);
+      if (!app || !value) continue;
+      const def = defaults[appId] || {};
+      next[appId] = {
+        x: finiteNumber(value.x, def.x ?? 40),
+        y: finiteNumber(value.y, def.y ?? 60),
+        width: Math.max(MIN_WINDOW_WIDTH, finiteNumber(value.width, def.width ?? 360)),
+        height: Math.max(MIN_WINDOW_HEIGHT, finiteNumber(value.height, def.height ?? 400)),
+        minimized: Boolean(value.minimized),
+      };
+    }
+
+    return next;
+  }
+
+  function normalizeSavedWindow(value: Partial<WindowState>): WindowState | null {
+    if (!value?.appId) return null;
+    const app = apps.find((entry) => entry.id === value.appId);
+    if (!app) return null;
+    const def = defaults[value.appId] || {};
+
+    return {
+      appId: app.id,
+      title: app.name,
+      x: finiteNumber(value.x, def.x ?? 40),
+      y: finiteNumber(value.y, def.y ?? 60),
+      width: Math.max(MIN_WINDOW_WIDTH, finiteNumber(value.width, def.width ?? 360)),
+      height: Math.max(MIN_WINDOW_HEIGHT, finiteNumber(value.height, def.height ?? 400)),
+      minimized: Boolean(value.minimized),
+      zIndex: Math.max(1, Math.round(finiteNumber(value.zIndex, 1))),
+    };
+  }
+
+  function finiteNumber(value: unknown, fallback: number): number {
+    return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  }
+
+  function rememberWindowBounds(win: WindowState) {
+    rememberedWindowBounds = {
+      ...rememberedWindowBounds,
+      [win.appId]: {
+        x: win.x,
+        y: win.y,
+        width: win.width,
+        height: win.height,
+        minimized: win.minimized,
+      },
+    };
+  }
+
+  function rememberOpenWindowBounds() {
+    windows.forEach((win) => rememberWindowBounds(win));
+  }
+
+  function scheduleWindowLayoutSave() {
+    if (windowLayoutSaveTimer !== undefined) window.clearTimeout(windowLayoutSaveTimer);
+    windowLayoutSaveTimer = window.setTimeout(saveWindowLayout, 120);
+  }
+
+  function saveWindowLayout() {
+    try {
+      rememberOpenWindowBounds();
+      const payload: SavedWindowLayout = {
+        windows: windows.map((win) => ({ ...win })),
+        bounds: rememberedWindowBounds,
+        zCounter,
+      };
+      window.localStorage.setItem(WINDOW_LAYOUT_KEY, JSON.stringify(payload));
+    } catch {}
+  }
+
+  function persistWindowLayoutNow() {
+    if (windowLayoutReady) saveWindowLayout();
+  }
+
+  // ============ MOBILE LAYOUT PERSISTENCE ============
+
+  function loadMobileLayout() {
+    try {
+      const raw = window.localStorage.getItem(MOBILE_LAYOUT_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        mobileActiveAppId = validMobileAppId(saved.activeAppId) ? saved.activeAppId : "";
+        mobileAppHistory = Array.isArray(saved.history)
+          ? saved.history.filter(validMobileAppId).filter((id: string) => id !== mobileActiveAppId).slice(-20)
+          : [];
+      }
+    } catch {}
+
+    mobileLayoutReady = true;
+  }
+
+  function saveMobileLayout() {
+    try {
+      window.localStorage.setItem(MOBILE_LAYOUT_KEY, JSON.stringify({
+        activeAppId: mobileActiveAppId,
+        history: mobileAppHistory.slice(-20),
+      }));
+    } catch {}
+  }
+
+  function persistMobileLayoutNow() {
+    if (mobileLayoutReady) saveMobileLayout();
+  }
+
+  function validMobileAppId(appId: unknown): appId is string {
+    return typeof appId === "string" && appId !== "characterProfile" && apps.some((app) => app.id === appId);
+  }
+
   // ============ DESKTOP WINDOW MANAGEMENT ============
 
   function toggleApp(e: CustomEvent<{ appId: string }>) {
     const { appId } = e.detail;
     if (windows.find((w) => w.appId === appId)) {
+      const closing = windows.find((w) => w.appId === appId);
+      if (closing) rememberWindowBounds(closing);
       windows = windows.filter((w) => w.appId !== appId);
+      persistWindowLayoutNow();
     } else {
       openApp(appId);
     }
@@ -187,38 +370,135 @@
     if (windows.find((w) => w.appId === appId)) {
       zCounter++;
       windows = windows.map((w) => w.appId === appId ? { ...w, zIndex: zCounter } : w);
+      persistWindowLayoutNow();
       return;
     }
     const app = apps.find((a) => a.id === appId);
     if (!app) return;
     const def = defaults[appId] || {};
+    const savedBounds = rememberedWindowBounds[appId];
     zCounter++;
     const vpX = -panX / zoom; const vpY = -panY / zoom;
     windows = [...windows, {
       appId, title: app.name,
-      x: (def.x ?? 40) + vpX, y: (def.y ?? 60) + vpY,
-      width: def.width ?? 360, height: def.height ?? 400,
-      minimized: false, zIndex: zCounter,
+      x: savedBounds ? savedBounds.x : (def.x ?? 40) + vpX,
+      y: savedBounds ? savedBounds.y : (def.y ?? 60) + vpY,
+      width: savedBounds?.width ?? def.width ?? 360,
+      height: savedBounds?.height ?? def.height ?? 400,
+      minimized: savedBounds?.minimized ?? false, zIndex: zCounter,
     }];
+    persistWindowLayoutNow();
   }
 
   function focusWindow(e: CustomEvent<{ appId: string }>) {
     zCounter++;
     windows = windows.map((w) => w.appId === e.detail.appId ? { ...w, zIndex: zCounter } : w);
+    persistWindowLayoutNow();
   }
 
   function closeWindow(e: CustomEvent<{ appId: string }>) {
+    const closing = windows.find((w) => w.appId === e.detail.appId);
+    if (closing) rememberWindowBounds(closing);
     windows = windows.filter((w) => w.appId !== e.detail.appId);
+    persistWindowLayoutNow();
+  }
+
+  function onWindowLayoutChange() {
+    rememberOpenWindowBounds();
+    saveWindowLayout();
   }
 
   // ============ MOBILE NAV ============
 
   function onMobileOpen(e: CustomEvent<{ appId: string }>) {
-    mobileActiveAppId = e.detail.appId;
+    openMobileApp(e.detail.appId);
   }
 
   function onMobileClose() {
+    goMobileBack();
+  }
+
+  function openMobileApp(appId: string) {
+    mobileMenuOpen = false;
+    if (appId === "characterProfile") {
+      mobileActiveAppId = "";
+      mobileAppHistory = [];
+      persistMobileLayoutNow();
+      return;
+    }
+    if (!apps.some((app) => app.id === appId)) return;
+    if (mobileActiveAppId && mobileActiveAppId !== appId) {
+      mobileAppHistory = [...mobileAppHistory, mobileActiveAppId].slice(-20);
+    }
+    mobileActiveAppId = appId;
+    persistMobileLayoutNow();
+  }
+
+  function goMobileBack() {
+    if (mobileAppHistory.length > 0) {
+      const previous = mobileAppHistory[mobileAppHistory.length - 1];
+      mobileAppHistory = mobileAppHistory.slice(0, -1);
+      mobileActiveAppId = previous;
+      persistMobileLayoutNow();
+      return;
+    }
     mobileActiveAppId = "";
+    persistMobileLayoutNow();
+  }
+
+  function onMobileRootTouchStart(e: TouchEvent) {
+    if (!isMobile || showSettings || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    startEdgeSwipe(touch.clientX, touch.clientY);
+  }
+
+  function onMobileRootTouchMove(e: TouchEvent) {
+    if (!edgeSwipeTracking || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    moveEdgeSwipe(touch.clientX, touch.clientY, () => e.preventDefault());
+  }
+
+  function onMobileRootTouchEnd() {
+    endEdgeSwipe();
+  }
+
+  function onMobileRootPointerDown(e: PointerEvent) {
+    if (!isMobile || showSettings || e.clientX > EDGE_SWIPE_START) return;
+    edgeSwipePointerId = e.pointerId;
+    startEdgeSwipe(e.clientX, e.clientY);
+  }
+
+  function onMobileRootPointerMove(e: PointerEvent) {
+    if (edgeSwipePointerId !== e.pointerId) return;
+    moveEdgeSwipe(e.clientX, e.clientY, () => e.preventDefault());
+  }
+
+  function onMobileRootPointerEnd(e: PointerEvent) {
+    if (edgeSwipePointerId !== e.pointerId) return;
+    endEdgeSwipe();
+  }
+
+  function startEdgeSwipe(clientX: number, clientY: number) {
+    if (clientX > EDGE_SWIPE_START) return;
+    edgeSwipeTracking = true;
+    edgeSwipeStartX = clientX;
+    edgeSwipeStartY = clientY;
+  }
+
+  function moveEdgeSwipe(clientX: number, clientY: number, preventDefault: () => void) {
+    if (!edgeSwipeTracking) return;
+    const dx = clientX - edgeSwipeStartX;
+    const dy = Math.abs(clientY - edgeSwipeStartY);
+    if (dx > 12 && dx > dy) preventDefault();
+    if (dx >= EDGE_SWIPE_TRIGGER && dy < 80) {
+      mobileMenuOpen = true;
+      endEdgeSwipe();
+    }
+  }
+
+  function endEdgeSwipe() {
+    edgeSwipeTracking = false;
+    edgeSwipePointerId = null;
   }
 
   // ============ DESKTOP PAN ============
@@ -316,19 +596,28 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="app-root" class:mobile={isMobile}>
+<div
+  class="app-root"
+  class:mobile={isMobile}
+  on:touchstart={onMobileRootTouchStart}
+  on:touchmove|nonpassive={onMobileRootTouchMove}
+  on:touchend={onMobileRootTouchEnd}
+  on:touchcancel={onMobileRootTouchEnd}
+  on:pointerdown={onMobileRootPointerDown}
+  on:pointermove={onMobileRootPointerMove}
+  on:pointerup={onMobileRootPointerEnd}
+  on:pointercancel={onMobileRootPointerEnd}
+>
 
-  <!-- DESKTOP: top toolbar -->
+  <!-- DESKTOP: left app rail + canvas workspace -->
   {#if !isMobile}
+    <div class="desktop-shell">
     <Toolbar {apps} {openAppIds} {zoom} {characterName}
       on:toggle={toggleApp}
       on:settings={() => { showSettings = true; }}
       on:resetView={resetView}
     />
-  {/if}
 
-  <!-- ======== DESKTOP: Canvas workspace ======== -->
-  {#if !isMobile}
     <div
       class="viewport"
       class:panning={isPanning || spaceHeld}
@@ -354,7 +643,7 @@
             bind:width={win.width} bind:height={win.height}
             zIndex={win.zIndex} bind:minimized={win.minimized}
             mobileMode={false}
-            on:focus={focusWindow} on:close={closeWindow}
+            on:focus={focusWindow} on:close={closeWindow} on:layoutChange={onWindowLayoutChange}
           >
             {#if win.appId === "characterProfile"}<CharacterProfile />
             {:else if win.appId === "diceRoller"}<DiceRoller />
@@ -376,11 +665,12 @@
 
         {#if windows.length === 0}
           <div class="empty-hint">
-            <span>Click a sub app in the toolbar to open it.</span>
+            <span>Click a sub app in the left rail to open it.</span>
             <span class="hint-sub">Space + drag to pan · Ctrl + scroll to zoom</span>
           </div>
         {/if}
       </div>
+    </div>
     </div>
 
   {:else}
@@ -421,6 +711,7 @@
       {apps}
       activeAppId={mobileActiveAppId}
       {characterName}
+      bind:drawerOpen={mobileMenuOpen}
       on:open={onMobileOpen}
       on:settings={() => { showSettings = true; }}
     />
@@ -445,9 +736,16 @@
     overflow: hidden;
   }
 
+  .desktop-shell {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+  }
+
   /* ---- Desktop viewport ---- */
   .viewport {
-    flex: 1; position: relative; overflow: hidden;
+    flex: 1; min-width: 0; position: relative; overflow: hidden;
     cursor: default; background: var(--bg);
   }
   .viewport.panning { cursor: grab; }

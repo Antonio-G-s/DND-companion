@@ -42,26 +42,35 @@
 
 <style>
   .toolbar {
-    display: flex; align-items: center; height: 36px;
-    padding: 0 12px; background: var(--bg-raised);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0; gap: 12px;
+    display: flex; flex-direction: column; align-items: stretch;
+    width: 180px; height: 100%;
+    padding: 12px 8px; background: var(--bg-raised);
+    border-right: 1px solid var(--border);
+    flex-shrink: 0; gap: 10px;
   }
 
   .brand {
     font-family: var(--font-heading); font-size: 13px;
     color: var(--accent); letter-spacing: 1px; font-weight: 600;
-    white-space: nowrap; max-width: 140px;
+    white-space: nowrap; max-width: 100%;
     overflow: hidden; text-overflow: ellipsis;
+    padding: 2px 4px 8px;
+    border-bottom: 1px solid var(--border);
   }
 
-  .app-buttons { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+  .app-buttons {
+    display: flex; flex-direction: column; gap: 4px;
+    overflow-x: hidden; overflow-y: auto; flex: 1;
+    padding-right: 2px;
+  }
 
   .app-btn {
-    height: 26px; padding: 0 12px; font-size: 12px;
+    width: 100%; min-height: 30px; padding: 0 10px; font-size: 12px;
+    display: flex; align-items: center; justify-content: flex-start;
     border: 1px solid var(--border); background: transparent;
     color: var(--text-dim); border-radius: 2px; white-space: nowrap;
-    min-height: 0; transition: all var(--transition);
+    overflow: hidden; text-overflow: ellipsis;
+    transition: all var(--transition);
   }
 
   .app-btn:hover { color: var(--text); border-color: var(--border-focus); }
@@ -70,10 +79,13 @@
     background: rgba(200, 169, 110, 0.08);
   }
 
-  .toolbar-right { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+  .toolbar-right {
+    display: flex; gap: 4px; align-items: center; flex-shrink: 0;
+    padding-top: 8px; border-top: 1px solid var(--border);
+  }
 
   .zoom-badge {
-    font-size: 10px; padding: 2px 6px; color: var(--text-dim);
+    flex: 1; font-size: 10px; padding: 2px 6px; color: var(--text-dim);
     background: var(--bg-input); border: 1px solid var(--border);
     border-radius: 2px; min-height: 0;
   }
